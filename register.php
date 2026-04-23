@@ -73,8 +73,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($sifre)) {
             $hatalar[] = 'Şifre alanı zorunludur.';
-        } elseif (mb_strlen($sifre) < 6) {
-            $hatalar[] = 'Şifre en az 6 karakter olmalıdır.';
+        } elseif (mb_strlen($sifre) < 8) {
+            $hatalar[] = 'Şifre en az 8 karakter olmalıdır.';
+        } elseif (!preg_match('/[A-Z]/', $sifre)) {
+            $hatalar[] = 'Şifre en az bir büyük harf içermelidir.';
+        } elseif (!preg_match('/[0-9]/', $sifre)) {
+            $hatalar[] = 'Şifre en az bir rakam içermelidir.';
         }
 
         if ($sifre !== $sifreTekrar) {
@@ -166,15 +170,110 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="sifre">Şifre</label>
                     <input type="password" id="sifre" name="sifre" class="form-control"
-                           required minlength="6">
+                           required minlength="8">
+
+                    <!-- Şifre gücü göstergesi -->
+                    <div id="guc-cubuk-kap" style="margin-top:8px; display:none;">
+                        <div style="background:#e0e0e0; border-radius:4px; height:6px; overflow:hidden;">
+                            <div id="guc-cubuk" style="height:100%; width:0%; border-radius:4px; transition:width .3s, background .3s;"></div>
+                        </div>
+                        <ul id="guc-listesi" style="margin:8px 0 0; padding-left:18px; font-size:13px; color:#555; line-height:1.8;">
+                            <li id="kural-uzunluk">En az 8 karakter</li>
+                            <li id="kural-buyuk">En az 1 büyük harf (A-Z)</li>
+                            <li id="kural-rakam">En az 1 rakam (0-9)</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="sifre_tekrar">Şifre Tekrar</label>
                     <input type="password" id="sifre_tekrar" name="sifre_tekrar" class="form-control"
-                           required minlength="6">
+                           required minlength="8">
+                    <p id="eslesmez-uyari" style="display:none; color:#c0392b; font-size:13px; margin-top:5px;">
+                        Şifreler eşleşmiyor.
+                    </p>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Kayıt Ol</button>
+                <button type="submit" id="kayit-btn" class="btn btn-primary btn-block">Kayıt Ol</button>
             </form>
+
+            <script>
+            (function () {
+                var sifre       = document.getElementById('sifre');
+                var tekrar      = document.getElementById('sifre_tekrar');
+                var cubukKap    = document.getElementById('guc-cubuk-kap');
+                var cubuk       = document.getElementById('guc-cubuk');
+                var kuralUzunluk = document.getElementById('kural-uzunluk');
+                var kuralBuyuk  = document.getElementById('kural-buyuk');
+                var kuralRakam  = document.getElementById('kural-rakam');
+                var uyari       = document.getElementById('eslesmez-uyari');
+                var btn         = document.getElementById('kayit-btn');
+
+                var RENKLER = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71'];
+                var GENISLIK = ['25%', '50%', '75%', '100%'];
+
+                function kuralRengi(el, gecti) {
+                    el.style.color = gecti ? '#27ae60' : '#555';
+                    el.style.fontWeight = gecti ? '600' : 'normal';
+                }
+
+                function gucHesapla(deger) {
+                    var puan = 0;
+                    var uzunlukOk = deger.length >= 8;
+                    var buyukOk   = /[A-Z]/.test(deger);
+                    var rakamOk   = /[0-9]/.test(deger);
+
+                    if (uzunlukOk) puan++;
+                    if (buyukOk)   puan++;
+                    if (rakamOk)   puan++;
+                    // Bonus: özel karakter varsa ekstra puan
+                    if (/[^A-Za-z0-9]/.test(deger)) puan++;
+
+                    kuralRengi(kuralUzunluk, uzunlukOk);
+                    kuralRengi(kuralBuyuk,   buyukOk);
+                    kuralRengi(kuralRakam,   rakamOk);
+
+                    return { puan: Math.min(puan, 4), uzunlukOk: uzunlukOk, buyukOk: buyukOk, rakamOk: rakamOk };
+                }
+
+                sifre.addEventListener('input', function () {
+                    var deger = this.value;
+
+                    if (deger.length === 0) {
+                        cubukKap.style.display = 'none';
+                        return;
+                    }
+
+                    cubukKap.style.display = 'block';
+                    var sonuc = gucHesapla(deger);
+                    var idx   = sonuc.puan > 0 ? sonuc.puan - 1 : 0;
+                    cubuk.style.width      = GENISLIK[idx];
+                    cubuk.style.background = RENKLER[idx];
+
+                    // Şifre tekrar alanı doluysa eşleşme kontrolü güncelle
+                    if (tekrar.value.length > 0) {
+                        uyari.style.display = (deger !== tekrar.value) ? 'block' : 'none';
+                    }
+                });
+
+                tekrar.addEventListener('input', function () {
+                    uyari.style.display = (sifre.value !== this.value) ? 'block' : 'none';
+                });
+
+                // Sunucu zaten kontrol ediyor; bu sadece kullanıcıya hızlı geri bildirim için
+                document.querySelector('form').addEventListener('submit', function (e) {
+                    var sonuc = gucHesapla(sifre.value);
+                    if (!sonuc.uzunlukOk || !sonuc.buyukOk || !sonuc.rakamOk) {
+                        e.preventDefault();
+                        cubukKap.style.display = 'block';
+                        alert('Lütfen şifre kurallarını karşıladığınızdan emin olun.');
+                        return;
+                    }
+                    if (sifre.value !== tekrar.value) {
+                        e.preventDefault();
+                        uyari.style.display = 'block';
+                    }
+                });
+            })();
+            </script>
 
             <p class="text-center mt-15">
                 Zaten hesabın var mı? <a href="login.php">Giriş Yap</a>
