@@ -1,19 +1,121 @@
 <?php
 /**
- * index.php
- * Uygulamanın giriş noktası; karşılama ekranı.
- * Kullanıcıyı login veya register sayfasına yönlendirir.
+ * register.php
+ * Yeni kullanıcı kayıt formu ve kayıt işleme mantığı.
+ * - Ad ve soyad ayrı alınır.
+ * - E-posta benzersizliği kontrol edilir.
+ * - Şifre password_hash() ile bcrypt ile hashlenir.
+ * - CSRF token ile Cross-Site Request Forgery saldırılarına karşı korunur.
+ * - Başarılı kayıt sonrası login.php'ye yönlendirme yapılır.
  */
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/database.php';
 
-// Oturumu başlat
 session_start();
 
-// Kullanıcı zaten giriş yapmışsa doğrudan panele yönlendir
+// Zaten giriş yapmışsa panele yönlendir
 if (isset($_SESSION['user_id'])) {
     header('Location: dashboard.php');
     exit;
+}
+
+// Hata ve başarı mesajlarını tutacak değişkenler
+$hatalar = [];
+$form    = ['ad' => '', 'soyad' => '', 'email' => ''];
+
+// ─── CSRF Token Oluştur ───────────────────────────────────────────────────────
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// ─── POST İsteği Geldiğinde Kayıt İşlemini Yap ───────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    // ─── CSRF Token Doğrulama ─────────────────────────────────────────────────
+    $csrfGelen = $_POST['csrf_token'] ?? '';
+    if (!hash_equals($_SESSION['csrf_token'], $csrfGelen)) {
+        $hatalar[] = 'Geçersiz form isteği. Lütfen sayfayı yenileyip tekrar deneyin.';
+    } else {
+        // ─── Token doğrulandı; kullanılan token'ı hemen yenile ───────────────
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+        // Kullanıcıdan gelen verileri al
+        $ad          = trim($_POST['ad']          ?? '');
+        $soyad       = trim($_POST['soyad']       ?? '');
+        $email       = trim($_POST['email']       ?? '');
+        $sifre       = $_POST['sifre']            ?? '';
+        $sifreTekrar = $_POST['sifre_tekrar']     ?? '';
+
+        // Eski değerleri form alanlarını doldurmak için sakla
+        $form = ['ad' => $ad, 'soyad' => $soyad, 'email' => $email];
+
+        // ─── Doğrulama Kontrolleri ────────────────────────────────────────────
+        if (empty($ad)) {
+            $hatalar[] = 'Ad alanı zorunludur.';
+        } elseif (mb_strlen($ad) > 50) {
+            $hatalar[] = 'Ad en fazla 50 karakter olabilir.';
+        }
+
+        if (empty($soyad)) {
+            $hatalar[] = 'Soyad alanı zorunludur.';
+        } elseif (mb_strlen($soyad) > 50) {
+            $hatalar[] = 'Soyad en fazla 50 karakter olabilir.';
+        }
+
+        if (empty($email)) {
+            $hatalar[] = 'E-posta alanı zorunludur.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $hatalar[] = 'Geçerli bir e-posta adresi giriniz.';
+        } elseif (mb_strlen($email) > 150) {
+            $hatalar[] = 'E-posta en fazla 150 karakter olabilir.';
+        }
+
+        if (empty($sifre)) {
+            $hatalar[] = 'Şifre alanı zorunludur.';
+        } elseif (mb_strlen($sifre) < 6) {
+            $hatalar[] = 'Şifre en az 6 karakter olmalıdır.';
+        }
+
+        if ($sifre !== $sifreTekrar) {
+            $hatalar[] = 'Şifre ve şifre tekrar alanları eşleşmiyor.';
+        }
+
+        // ─── Hata Yoksa Veritabanı İşlemini Yap ──────────────────────────────
+        if (empty($hatalar)) {
+            try {
+                $pdo = Database::getInstance()->getConnection();
+
+                // E-posta adresinin daha önce kayıtlı olup olmadığını kontrol et
+                $stmt = $pdo->prepare('SELECT id FROM users WHERE email = :email');
+                $stmt->execute([':email' => $email]);
+
+                if ($stmt->fetchColumn()) {
+                    $hatalar[] = 'Bu e-posta adresi zaten kayıtlı. Lütfen giriş yapın.';
+                } else {
+                    // Şifreyi bcrypt ile hashle
+                    $sifreHash = password_hash($sifre, PASSWORD_BCRYPT);
+
+                    $insert = $pdo->prepare(
+                        'INSERT INTO users (ad, soyad, email, sifre_hash)
+                         VALUES (:ad, :soyad, :email, :sifre_hash)'
+                    );
+                    $insert->execute([
+                        ':ad'         => $ad,
+                        ':soyad'      => $soyad,
+                        ':email'      => $email,
+                        ':sifre_hash' => $sifreHash,
+                    ]);
+
+                    header('Location: login.php?kayit=basarili');
+                    exit;
+                }
+            } catch (PDOException $e) {
+                error_log('Kayıt Hatası: ' . $e->getMessage());
+                $hatalar[] = 'Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+            }
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -21,18 +123,62 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars(APP_NAME) ?> – Ana Sayfa</title>
+    <title><?= htmlspecialchars(APP_NAME) ?> – Kayıt Ol</title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
     <div class="container">
-        <div class="card text-center mt-60">
-            <h1 class="app-title">🔐 <?= htmlspecialchars(APP_NAME) ?></h1>
-            <p class="subtitle">PHP &amp; MySQL ile geliştirilmiş güvenli kullanıcı yönetim sistemi.</p>
-            <div class="btn-group mt-30">
-                <a href="login.php"    class="btn btn-primary">Giriş Yap</a>
-                <a href="register.php" class="btn btn-secondary">Kayıt Ol</a>
-            </div>
+        <div class="card mt-60">
+            <h2 class="card-title">📝 Kayıt Ol</h2>
+
+            <?php if (!empty($hatalar)): ?>
+                <div class="alert alert-danger">
+                    <ul>
+                        <?php foreach ($hatalar as $hata): ?>
+                            <li><?= htmlspecialchars($hata) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <!-- Standart HTML formu kullanılır -->
+            <form method="POST" action="register.php">
+
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token"
+                       value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
+
+                <div class="form-group">
+                    <label for="ad">Ad</label>
+                    <input type="text" id="ad" name="ad" class="form-control"
+                           value="<?= htmlspecialchars($form['ad']) ?>" required maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="soyad">Soyad</label>
+                    <input type="text" id="soyad" name="soyad" class="form-control"
+                           value="<?= htmlspecialchars($form['soyad']) ?>" required maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" name="email" class="form-control"
+                           value="<?= htmlspecialchars($form['email']) ?>" required maxlength="150">
+                </div>
+                <div class="form-group">
+                    <label for="sifre">Şifre</label>
+                    <input type="password" id="sifre" name="sifre" class="form-control"
+                           required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="sifre_tekrar">Şifre Tekrar</label>
+                    <input type="password" id="sifre_tekrar" name="sifre_tekrar" class="form-control"
+                           required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Kayıt Ol</button>
+            </form>
+
+            <p class="text-center mt-15">
+                Zaten hesabın var mı? <a href="login.php">Giriş Yap</a>
+            </p>
         </div>
     </div>
     <script src="assets/js/main.js"></script>
