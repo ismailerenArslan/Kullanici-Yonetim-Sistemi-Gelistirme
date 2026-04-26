@@ -10,13 +10,13 @@
     --gold-dark:    #8B6914;
     --bg:           #0A0A0D;
     --surface-1:    #111116;
-    --surface-2:    #18181F;
+    --surface-2:    #F0F8FF;
     --surface-3:    #21212A;
     --surface-4:    #2A2A35;
     --border:       rgba(201,168,76,0.15);
     --border-hover: rgba(201,168,76,0.4);
     --text:         #EDE9E0;
-    --text-dim:     #7A7785;
+    --text-dim:     lab(0% 0 0);
     --danger:       #D95C5C;
     --danger-soft:  rgba(217,92,92,0.09);
     --success:      #4CAF7D;
@@ -41,9 +41,7 @@ body {
     color: var(--text);
     line-height: 1.65;
     min-height: 100vh;
-    background-image:
-        linear-gradient(120deg, rgba(201,168,76,0.08) 0%, rgba(10,10,13,0.98) 100%),
-        url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80');
+    background-image: url('../img/dağ.jpg');
     background-size: cover;
     background-attachment: fixed;
     background-position: center;
@@ -63,10 +61,10 @@ body {
 
 /* ── Card ─────────────────────────────────────────────────── */
 .card {
-    background: rgba(24, 24, 31, 0.45);
-    border: 1.5px solid rgba(201,168,76,0.22);
+    background: #fefefd;
+    border: 2px solid #ADD8E6;
     border-radius: var(--r-lg);
-    box-shadow: 0 8px 40px 0 rgba(0,0,0,0.55), 0 2px 8px rgba(201,168,76,0.10);
+    box-shadow: 0 0 15px rgba(68, 12, 199, 0.6), 0 3px 10px #68d9ff;
     padding: 2.75rem 2.5rem;
     max-width: 480px;
     margin-left: auto;
@@ -77,11 +75,12 @@ body {
     backdrop-filter: blur(18px) saturate(140%);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     transition: box-shadow .25s, border-color .25s;
+    color: #1A1200;
 }
 
 .card:hover {
-    box-shadow: 0 12px 48px 0 rgba(201,168,76,0.18), 0 2px 8px rgba(201,168,76,0.18);
-    border-color: var(--gold-light);
+    box-shadow: 0 0 20px rgba(173, 216, 230, 0.8), 0 5px 15px rgba(173, 216, 230, 0.5);
+    border-color: #87CEEB;
 }
 
 .card::before {
@@ -89,7 +88,7 @@ body {
     position: absolute;
     top: 0; left: 10%; right: 10%;
     height: 2.5px;
-    background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+    background: linear-gradient(90deg, transparent, #87CEEB, transparent);
     opacity: 0.7;
     filter: blur(0.5px);
 }
@@ -105,7 +104,7 @@ body {
     font-family: 'Playfair Display', serif;
     font-size: 1.45rem;
     font-weight: 600;
-    color: var(--text);
+    color: var(--gold);
     margin-bottom: 1.5rem;
     letter-spacing: .01em;
 }
@@ -116,7 +115,7 @@ body {
     font-size: 2.8rem;
     font-weight: 700;
     letter-spacing: .02em;
-    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 55%, var(--gold-dark) 100%);
+    background: linear-gradient(135deg, #87CEEB 0%, #ADD8E6 55%, #4682B4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -125,18 +124,28 @@ body {
 }
 
 .subtitle {
-    color: var(--text-dim);
+    color: #0f0e0e;
     font-size: .92rem;
     font-weight: 300;
     margin-bottom: 1.5rem;
     letter-spacing: .025em;
 }
 
+.login-welcome-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--gold);
+    margin-bottom: 1rem;
+}
+
 /* ── Divider ─ */
 .gold-divider {
     width: 52px;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    background: linear-gradient(90deg, transparent, #87CEEB, transparent);
     margin: 1.25rem auto 1.75rem;
     border: none;
 }
@@ -161,35 +170,37 @@ body {
 .btn:active { transform: scale(.98); }
 
 .btn-primary {
-    background: linear-gradient(135deg, rgba(232,201,122,0.85) 0%, rgba(201,168,76,0.95) 50%, #A07820 100%);
-    color: #1A1200;
+    background: #effaffcc;
+    color: #C9A84C;
     font-weight: 600;
-    box-shadow: 0 3px 18px 0 rgba(201,168,76,.32), 0 1.5px 6px rgba(201,168,76,.12);
-    border: 1.5px solid rgba(201,168,76,0.22);
+    box-shadow: 0 0 15px rgb(255, 255, 255), 0 3px 10px rgb(251, 251, 251);
+    border: 2px solid #ADD8E6;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     transition: box-shadow .22s, border-color .22s;
 }
 
 .btn-primary:hover {
-    box-shadow: 0 7px 28px rgba(201,168,76,.48);
+    box-shadow: 0 0 20px #add8e6cc, 0 5px 15px #add8e6cc;
     transform: translateY(-2px) scale(1.03);
-    filter: brightness(1.09) saturate(1.1);
-    border-color: var(--gold-light);
+    filter: brightness(1.05);
+    border-color: #87CEEB;
 }
 
 .btn-secondary {
-    background: rgba(255,255,255,0.07);
-    color: var(--text);
-    border: 1.5px solid var(--border);
+    background: #b3dedc;
+    color: #1A1200;
+    border: 2px solid #ADD8E6;
+    box-shadow: 0 0 15px rgba(173, 216, 230, 0.6), 0 3px 10px rgba(173, 216, 230, 0.3);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     transition: border-color .22s, background .22s;
 }
 
 .btn-secondary:hover {
-    border-color: var(--gold-light);
-    background: rgba(255,255,255,0.13);
+    border-color: #87CEEB;
+    background: #FFFFF0;
+    box-shadow: 0 0 20px rgba(173, 216, 230, 0.8), 0 5px 15px rgba(173, 216, 230, 0.5);
     transform: translateY(-2px) scale(1.03);
 }
 
@@ -220,6 +231,7 @@ body {
     text-transform: uppercase;
     letter-spacing: .1em;
     color: var(--text-dim);
+    opacity: .55;
     margin-bottom: .42rem;
 }
 
@@ -227,11 +239,12 @@ body {
     width: 100%;
     padding: .72rem 1.05rem;
     background: var(--surface-2);
+    background-color: var(--surface-2);
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
     font-family: 'DM Sans', sans-serif;
     font-size: .9375rem;
-    color: var(--text);
+    color: #1A1200;
     outline: none;
     transition: border-color var(--t), box-shadow var(--t), background var(--t);
 }
@@ -240,7 +253,6 @@ body {
 
 .form-control:focus {
     border-color: var(--gold);
-    background: var(--surface-3);
     box-shadow: 0 0 0 3px rgba(201,168,76,.11);
 }
 
@@ -291,8 +303,8 @@ body {
     text-decoration: none;
 }
 
-.navbar-right { display: flex; align-items: center; gap: .9rem; font-size: .86rem; color: var(--text-dim); }
-.navbar-right strong { color: var(--text); font-weight: 500; }
+.navbar-right { display: flex; align-items: center; gap: .9rem; font-size: .86rem; color: var(--gold); }
+.navbar-right strong { color: var(--gold); font-weight: 500; }
 
 /* ── Table ────────────────────────────────────────────────── */
 .table {

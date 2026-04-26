@@ -114,8 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <div class="card mt-60">
 
-            <p style="font-size:.72rem; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); margin-bottom:.5rem;">Hoş Geldiniz</p>
-            <h2 class="card-title">Giriş Yap</h2>
+            <p class="login-welcome-title">Hoş Geldiniz</p>
 
             <?php if ($bilgi): ?>
                 <div class="alert alert-success"><?= htmlspecialchars($bilgi) ?></div>
