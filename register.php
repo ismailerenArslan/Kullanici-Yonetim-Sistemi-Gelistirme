@@ -15,6 +15,18 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
+function metinUzunlugu(string $metin): int {
+    if (function_exists('mb_strlen')) {
+        return mb_strlen($metin, 'UTF-8');
+    }
+
+    if (preg_match_all('/./us', $metin, $eslesmeler) !== false) {
+        return count($eslesmeler[0]);
+    }
+
+    return strlen($metin);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $csrfGelen = $_POST['csrf_token'] ?? '';
     if (!hash_equals($_SESSION['csrf_token'], $csrfGelen)) {
@@ -30,17 +42,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $form        = ['ad' => $ad, 'soyad' => $soyad, 'email' => $email];
 
         if (empty($ad))            $hatalar[] = 'Ad alanı zorunludur.';
-        elseif (mb_strlen($ad)>50) $hatalar[] = 'Ad en fazla 50 karakter olabilir.';
+        elseif (metinUzunlugu($ad)>50) $hatalar[] = 'Ad en fazla 50 karakter olabilir.';
 
         if (empty($soyad))               $hatalar[] = 'Soyad alanı zorunludur.';
-        elseif (mb_strlen($soyad)>50)    $hatalar[] = 'Soyad en fazla 50 karakter olabilir.';
+        elseif (metinUzunlugu($soyad)>50)    $hatalar[] = 'Soyad en fazla 50 karakter olabilir.';
 
         if (empty($email))                              $hatalar[] = 'E-posta alanı zorunludur.';
         elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) $hatalar[] = 'Geçerli bir e-posta adresi giriniz.';
-        elseif (mb_strlen($email)>150)                  $hatalar[] = 'E-posta en fazla 150 karakter olabilir.';
+        elseif (metinUzunlugu($email)>150)                  $hatalar[] = 'E-posta en fazla 150 karakter olabilir.';
 
         if (empty($sifre))               $hatalar[] = 'Şifre alanı zorunludur.';
-        elseif (mb_strlen($sifre)<8)     $hatalar[] = 'Şifre en az 8 karakter olmalıdır.';
+        elseif (metinUzunlugu($sifre)<8)     $hatalar[] = 'Şifre en az 8 karakter olmalıdır.';
         elseif (!preg_match('/[A-Z]/',$sifre)) $hatalar[] = 'Şifre en az bir büyük harf içermelidir.';
         elseif (!preg_match('/[0-9]/',$sifre)) $hatalar[] = 'Şifre en az bir rakam içermelidir.';
 

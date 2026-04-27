@@ -19,9 +19,7 @@ if (isset($_SESSION['user_id'])) {
         $userId = (int) $_SESSION['user_id'];
 
         // Kullanıcının IP adresini al
-        $ip = !empty($_SERVER['HTTP_X_FORWARDED_FOR'])
-            ? trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0])
-            : ($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0');
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
         // Çıkış işlemini logla
         $stmt = $pdo->prepare(

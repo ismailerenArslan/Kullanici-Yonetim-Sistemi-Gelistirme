@@ -34,9 +34,19 @@ try {
     $stmtGecmis->execute([':user_id' => $userId]);
     $girisGecmisi = $stmtGecmis->fetchAll();
 
-    // İstatistik sayıları
-    $toplamGiris    = count(array_filter($girisGecmisi, fn($r) => $r['islem_tipi'] === 'giris_basarili'));
-    $toplamBasarisiz = count($basarisizGirisler);
+    $stmtToplamGiris = $pdo->prepare(
+        "SELECT COUNT(*) FROM users_logs
+         WHERE user_id = :user_id AND islem_tipi = 'giris_basarili'"
+    );
+    $stmtToplamGiris->execute([':user_id' => $userId]);
+    $toplamGiris = (int) $stmtToplamGiris->fetchColumn();
+
+    $stmtToplamBasarisiz = $pdo->prepare(
+        "SELECT COUNT(*) FROM users_logs
+         WHERE user_id = :user_id AND islem_tipi = 'giris_basarisiz'"
+    );
+    $stmtToplamBasarisiz->execute([':user_id' => $userId]);
+    $toplamBasarisiz = (int) $stmtToplamBasarisiz->fetchColumn();
 
 } catch (PDOException $e) {
     error_log('Dashboard Hatası: ' . $e->getMessage());

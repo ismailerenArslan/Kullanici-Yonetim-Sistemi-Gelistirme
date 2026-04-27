@@ -20,9 +20,6 @@ if (isset($_GET['kayit']) && $_GET['kayit'] === 'basarili') {
 }
 
 function getIpAdresi(): string {
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
-    }
     return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 }
 
